@@ -1,0 +1,114 @@
+[project]
+name = "tawked"
+version = "0.1.0"
+description = "Official Tawked SDK for Python: SMS OTP verification, WhatsApp Business API messages, transactional email and webhooks for businesses in Saudi Arabia."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Tawked", email = "support@tawked.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.27,<1",
+    "pydantic>=2.7,<3",
+    # pydantic-core ships Python 3.14 wheels from the release pydantic 2.12.0 requires (2.41.1).
+    "pydantic>=2.12,<3; python_version >= '3.14'",
+    "typing-extensions>=4.7",
+]
+keywords = [
+    "tawked",
+    "sdk",
+    "api",
+    "otp",
+    "sms",
+    "sms-otp",
+    "phone-verification",
+    "2fa",
+    "whatsapp",
+    "whatsapp-business-api",
+    "email",
+    "transactional-email",
+    "webhooks",
+    "asyncio",
+    "saudi-arabia",
+    "ksa",
+    "arabic",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Natural Language :: Arabic",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Communications :: Email",
+    "Topic :: Communications :: Telephony",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://tawked.com"
+Documentation = "https://docs.tawked.com"
+Changelog = "https://github.com/tawked/tawked-python/blob/main/CHANGELOG.md"
+Source = "https://github.com/tawked/tawked-python"
+Issues = "https://github.com/tawked/tawked-python/issues"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.11",
+    "pytest>=8.0",
+    "pytest-xdist>=3.6",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tawked"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/tawked", "README.md", "CHANGELOG.md", "LICENSE", "pyproject.toml"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "RUF"]
+ignore = [
+    "E501",   # long lines in generated docstrings and contract strings
+    "S101",   # assert in tests
+    "RUF001", # Arabic text in examples
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tawked", "tests"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "B011"]
+"scripts/**" = ["S603", "S607", "S310"]
+# The API's error codes are words, not credentials (`idempotency_secret_not_replayable`).
+"src/tawked/_generated/error_codes.py" = ["S105"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+packages = ["tawked"]
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-n auto --dist loadfile"
+filterwarnings = ["error::DeprecationWarning:tawked.*"]

@@ -1,0 +1,54 @@
+# CI for the tawked Python package.
+# Runs what this repository holds on its own: lint, format, types, the tests that need nothing
+# outside it, the build and the wheel in a clean environment. The full suite, against the API's
+# contract and a local stand-in for the API, runs before every release.
+# Nothing here publishes: release.yml publishes a version tag to PyPI by Trusted Publishing.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # The tests that need neither the API's contract nor the local stand-in.
+  STANDALONE_TESTS: >-
+    tests/test_core.py tests/test_union_warnings.py tests/test_webhooks_2026_09.py
+    tests/generated/test_models.py tests/generated/test_webhooks.py
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked
+      - run: uv run ruff check
+      - run: uv run ruff format --check
+      - run: uv run mypy --strict src
+      - run: uv run pytest $STANDALONE_TESTS
+      - run: uv build
+      - name: The wheel imports in a clean environment
+        run: |
+          uv venv /tmp/clean --python ${{ matrix.python }}
+          uv pip install --python /tmp/clean/bin/python dist/*.whl
+          /tmp/clean/bin/python -I -c "import tawked; tawked.Tawked(api_key='tk_live_x'); tawked.TawkedAccount(token='tk_acct_xxxxxxxx'); print(tawked.__version__)"
+
+  lowest:
+    # The lower bounds of the dependencies (httpx 0.27, pydantic 2.7) on the oldest Python.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.10"
+      - run: uv sync --resolution lowest-direct
+      - run: uv run --no-sync pytest $STANDALONE_TESTS
